@@ -3,12 +3,14 @@ from tkinter import ttk
 import threading
 import os
 import time
+import platform
 
 class MediaPlayerUI:
     def __init__(self, root, media_player):
         self.root = root
         self.media_player = media_player
         self.is_seeking = False
+        self.video_frame = None
         
         self.create_widgets()
         self.update_ui()
@@ -17,10 +19,27 @@ class MediaPlayerUI:
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        self.create_video_frame(main_frame)
         self.create_info_frame(main_frame)
         self.create_controls_frame(main_frame)
         self.create_progress_frame(main_frame)
         self.create_playlist_frame(main_frame)
+        
+    def create_video_frame(self, parent):
+        video_container = ttk.LabelFrame(parent, text="Відео", padding=5)
+        video_container.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        self.video_frame = tk.Frame(video_container, bg='black', width=640, height=360)
+        self.video_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.video_placeholder = tk.Label(
+            self.video_frame, 
+            text="Відкрийте відео або аудіо файл",
+            bg='black',
+            fg='white',
+            font=('Arial', 14)
+        )
+        self.video_placeholder.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
     def create_info_frame(self, parent):
         info_frame = ttk.LabelFrame(parent, text="Інформація про файл", padding=10)
@@ -141,6 +160,8 @@ class MediaPlayerUI:
             self.media_player.playlist = [file_path]
             self.media_player.current_index = 0
             
+            self.embed_video()
+            
     def load_folder(self, folder_path):
         media_extensions = ['.mp3', '.mp4', '.avi', '.mkv', '.wav', '.flac', 
                           '.ogg', '.mov', '.wmv', '.flv']
@@ -183,4 +204,26 @@ class MediaPlayerUI:
             time_text = f"{self.media_player.format_time(position)} / {self.media_player.format_time(duration)}"
             self.time_label.config(text=time_text)
             
-        self.root.after(1000, self.update_ui)
+        self.root.after(100, self.update_ui)  
+        
+    def embed_video(self):
+        try:
+            if self.video_placeholder:
+                self.video_placeholder.place_forget()
+            
+            player = self.media_player.get_video_handle()
+            
+            self.root.update()
+            
+            if platform.system() == 'Windows':
+                win_id = self.video_frame.winfo_id()
+                player.set_hwnd(win_id)
+            elif platform.system() == 'Linux':
+                win_id = self.video_frame.winfo_id()
+                player.set_xwindow(win_id)
+            elif platform.system() == 'Darwin':
+                win_id = self.video_frame.winfo_id()
+                player.set_nsobject(win_id)
+                
+        except Exception as e:
+            print(f"Помилка вбудовування відео: {e}")

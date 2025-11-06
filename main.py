@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import pygame
-import threading
 import os
 import sys
 from media_player import MediaPlayer
@@ -82,6 +80,5 @@ class MediaPlayerApp:
         self.root.mainloop()
 
 if __name__ == "__main__":
-    pygame.mixer.init()
     app = MediaPlayerApp()
     app.run()
